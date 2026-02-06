@@ -1,0 +1,14 @@
+{
+  "mentor_id": 4,
+  "one_line_reason": "캐시 전략, 성능 최적화, Redis 경험이 풍부합니다.",
+  "overlap_tags": [
+    "cache_strategy",
+    "throughput_optimization",
+    "redis"
+  ],
+  "caution_points": [
+    "CI/CD 파이프라인",
+    "PostgreSQL",
+    "Spring Boot"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "mentor_id": 5,
+  "one_line_reason": "PostgreSQL/Spring Boot 인덱스 튜닝 전문가",
+  "overlap_tags": [
+    "index_tuning",
+    "postgresql",
+    "spring_boot"
+  ],
+  "caution_points": [
+    "다른 토픽(캐시, CI/CD 등) 멘토링은 어려움"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "mentor_id": 3,
+  "one_line_reason": "모든 기술 스택과 다수 토픽이 일치합니다.",
+  "overlap_tags": [
+    "concurrency_control",
+    "index_tuning",
+    "inventory_deduction_logic",
+    "n_plus_one_optimization",
+    "throughput_optimization",
+    "github_actions"
+  ],
+  "caution_points": [
+    "cache_strategy",
+    "ci_cd_pipeline"
+  ]
+}

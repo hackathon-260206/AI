@@ -1,0 +1,7 @@
+[
+  "Spring Boot 및 PostgreSQL",
+  "N+1 문제 개선 및 인덱스 튜닝",
+  "Redis 캐시 도입 및 TPS 향상",
+  "GitHub Actions CI 파이프라인 구축",
+  "동시성 제어 및 재고 차감 로직"
+]

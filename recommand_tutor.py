@@ -3,8 +3,11 @@ import json
 import math
 import os
 import re
+import sys
 from dataclasses import dataclass
 from typing import Any
+
+from llm_cards import fill_cards
 
 try:
     import pymysql
@@ -378,6 +381,20 @@ def main() -> None:
     parser.add_argument("--keywords", default="result.json", help="Path to 5-sentence keyword JSON")
     parser.add_argument("--top-n", type=int, default=5, help="Top N mentors")
     parser.add_argument("--out", default="", help="Output JSON path (stdout if empty)")
+    parser.add_argument("--fill-cards", action="store_true", help="Call LLM and fill top5 cards")
+    parser.add_argument("--cards-out", default="cards.json", help="Output path for filled cards JSON")
+    parser.add_argument("--merged-out", default="out.json", help="Output path for merged result JSON")
+    parser.add_argument("--llm-provider", default="gemini_http", help="LLM provider name")
+    parser.add_argument("--llm-model", default="gemini-2.0-flash", help="LLM model name")
+    parser.add_argument("--llm-timeout", type=int, default=10, help="LLM call timeout seconds")
+    parser.add_argument(
+        "--llm-max-concurrency",
+        type=int,
+        default=3,
+        help="Maximum concurrent LLM calls",
+    )
+    parser.add_argument("--llm-cache-dir", default="./cache/cards", help="Card cache directory")
+    parser.add_argument("--llm-retry", type=int, default=1, help="Retries on LLM parse/validation failure")
 
     parser.add_argument("--db-host", default=os.getenv("MYSQL_HOST", "127.0.0.1"))
     parser.add_argument("--db-port", type=int, default=int(os.getenv("MYSQL_PORT", "3306")))
@@ -394,6 +411,7 @@ def main() -> None:
         "normalized_user": user_normalized,
         "top_n": [],
         "top5_card_prompts": [],
+        "cards": [],
         "fallback": None,
     }
 
@@ -414,6 +432,7 @@ def main() -> None:
             result["top_n"] = ranked
 
             mentor_by_id = {m.mentor_id: m for m in mentors}
+            validator_payloads: list[dict[str, Any]] = []
             for item in ranked[:5]:
                 mentor = mentor_by_id[item["mentor_id"]]
                 payload = {
@@ -439,11 +458,36 @@ def main() -> None:
                         "prompt_for_llm": build_top5_card_prompt(payload),
                     }
                 )
+                validator_payloads.append(payload)
+
+            if args.fill_cards:
+                try:
+                    cards = fill_cards(
+                        top5_card_prompts=result["top5_card_prompts"],
+                        validator_payloads=validator_payloads,
+                        provider=args.llm_provider,
+                        model=args.llm_model,
+                        timeout=args.llm_timeout,
+                        max_concurrency=args.llm_max_concurrency,
+                        cache_dir=args.llm_cache_dir,
+                        retry=args.llm_retry,
+                    )
+                except Exception as exc:
+                    print(f"[fill-cards] error: {exc}", file=sys.stderr)
+                    raise SystemExit(2)
+
+                result["cards"] = cards
         finally:
             conn.close()
 
     payload_text = json.dumps(result, ensure_ascii=False, indent=2)
-    if args.out:
+    if args.fill_cards:
+        with open(args.cards_out, "w", encoding="utf-8") as f:
+            f.write(json.dumps(result["cards"], ensure_ascii=False, indent=2))
+        with open(args.merged_out, "w", encoding="utf-8") as f:
+            f.write(payload_text)
+        print(payload_text)
+    elif args.out:
         with open(args.out, "w", encoding="utf-8") as f:
             f.write(payload_text)
     else:

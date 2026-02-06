@@ -1,0 +1,19 @@
+{
+  "mentor_id": 2,
+  "one_line_reason": "CI/CD 파이프라인 및 스프링 부트 경험이 풍부합니다.",
+  "overlap_tags": [
+    "ci_cd_pipeline",
+    "github_actions",
+    "spring_boot"
+  ],
+  "caution_points": [
+    "cache_strategy",
+    "concurrency_control",
+    "index_tuning",
+    "inventory_deduction_logic",
+    "n_plus_one_optimization",
+    "throughput_optimization",
+    "postgresql",
+    "redis"
+  ]
+}
