@@ -257,6 +257,22 @@ def recommend_top_n(
     return results[:n]
 
 
+def simplify_top_n(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    slim: list[dict[str, Any]] = []
+    for item in items:
+        slim.append(
+            {
+                "mentor_id": item["mentor_id"],
+                "mentor_name": item["mentor_name"],
+                "total_score": item["total_score"],
+                "topicMatch": item["topicMatch"],
+                "stackMatch": item["stackMatch"],
+                "quality": item["quality"],
+            }
+        )
+    return slim
+
+
 def build_top5_card_prompt(payload: dict[str, Any]) -> str:
     return (
         "[System]\n"
@@ -379,7 +395,7 @@ def build_mentor_models(rows: list[dict[str, Any]]) -> list[Mentor]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rule + score tutor recommendation (MySQL)")
     parser.add_argument("--keywords", default="result.json", help="Path to 5-sentence keyword JSON")
-    parser.add_argument("--top-n", type=int, default=5, help="Top N mentors")
+    TOP_N = 5
     parser.add_argument("--out", default="", help="Output JSON path (stdout if empty)")
     parser.add_argument("--fill-cards", action="store_true", help="Call LLM and fill top5 cards")
     parser.add_argument("--cards-out", default="cards.json", help="Output path for filled cards JSON")
@@ -409,7 +425,7 @@ def main() -> None:
 
     result: dict[str, Any] = {
         "normalized_user": user_normalized,
-        "top_n": [],
+        "top5": [],
         "top5_card_prompts": [],
         "cards": [],
         "fallback": None,
@@ -423,17 +439,17 @@ def main() -> None:
             actual_keyword_table = resolve_keyword_table(conn, args.keyword_table)
             rows = fetch_mentors_from_mysql(conn, actual_keyword_table)
             mentors = build_mentor_models(rows)
-            ranked = recommend_top_n(
+            ranked_full = recommend_top_n(
                 user_topics=set(user_normalized["topics"]),
                 user_stacks=set(user_normalized["stacks"]),
                 mentors=mentors,
-                n=args.top_n,
+                n=TOP_N,
             )
-            result["top_n"] = ranked
+            result["top5"] = simplify_top_n(ranked_full)
 
             mentor_by_id = {m.mentor_id: m for m in mentors}
             validator_payloads: list[dict[str, Any]] = []
-            for item in ranked[:5]:
+            for item in ranked_full[:TOP_N]:
                 mentor = mentor_by_id[item["mentor_id"]]
                 payload = {
                     "mentor_id": item["mentor_id"],
